@@ -1,0 +1,50 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "Methodology for the Fiscal Futures Annual Report"
+  subtitle: "Part of IGPA's Fiscal Futures Project"
+  author: "Alea Wilbur-Mujtaba"
+  date: last-modified
+
+  chapters:
+    - index.qmd
+    - Everything.qmd 
+    - Everything_changepensions.qmd
+
+
+  navbar: 
+    right: 
+      - icon: github
+        href: https://github.com/AleaWM/Fiscal-Futures-IL-FY2024.git
+    left:
+      - text: "About"
+        file: index.qmd
+      - text: "Data"
+        href: https://github.com/AleaWM/Fiscal-Futures-IL-FY2024/tree/main/data
+
+          
+
+# site-url: https://aleawm.github.io/https://github.com/AleaWM/Fiscal-Futures-IL-FY2023.git
+#  repo-actions: [edit]
+#  downloads: [pdf, epub]
+#  sharing: [twitter, facebook]
+   # sidebar:
+      #title: "On this page"
+
+
+format:
+  html:
+    theme: sandstone
+    toc: true
+    code-fold: true
+    code-tools: true
+    code-overflow: wrap
+    code-copy: true
+    fig-cap-location: top
+    tbl-cap-location: top
+    df-print: paged
+ 
+
+
