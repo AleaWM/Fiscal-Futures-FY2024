@@ -1663,7 +1663,7 @@ rm(cagr_1, cagr_2, cagr_3, cagr_5, cagr_10, cagr_max)
 
 Update all years in mutate() commands so that they all go up by 1:
 
-```{r error=TRUE}
+```{r}
 
 revenue_change2 <- rev_long %>%
   filter(Year >= past_year) %>%
@@ -1741,7 +1741,6 @@ The 10 largest revenue sources and 15 largest expenditure sources remain separat
 ```{r }
 #| label: tbl-top-exp-CAGRs
 #| tbl-cap: Largest Expenditure Categories with CAGRs
-#| error: true
 
 exp_totals <- ff_exp %>% rowwise() %>% mutate(exp_TOTALS = sum(across(exp_402:exp_970))) # creates total column too
 
@@ -1960,7 +1959,6 @@ Top 10 revenue sources CAGRs and Yearly Change Tables:
 #| label: tbl-top10-rev-CAGRs
 #| tbl-cap: Top 10 Revenue Sources with CAGRs
 #| tbl-cap-location: top
-#| error: true
 
 
 ##### Top 10 revenue CAGRs: ####
@@ -2023,8 +2021,6 @@ CAGR_revenue_majorcats_tot %>%
 #| label: tbl-top10-rev-yearlychange
 #| tbl-cap: Top 10 Revenue Sources with CAGRs
 #| tbl-cap-location: top
-#| error: true
-
 
 ###### Yearly change summary table for Top 10 Revenues #####
 revenue_change_majorcats <- rev_long_majorcats %>%
@@ -2062,7 +2058,6 @@ revenue_change_majorcats%>%
 Export summary file with Totals
 
 ```{r}
-#| error: true
 #install.packages("openxlsx")
 library(openxlsx)
 
@@ -2091,7 +2086,7 @@ dataset_names <- list('Aggregate Revenues' = revenue_wide2,
                       'aggregated_totals_long' = aggregated_totals_long # all data in long format. Good for creating pivot tables in Excel
                       )
 
-# write.xlsx(dataset_names, file = paste0("data/FY", current_year, " Files/summary_file_FY24_wTotals_2025_02_06.xlsx"))
+write.xlsx(dataset_names, file = paste0("data/FY", current_year, " Files/summary_file_FY24_PensionChange_2025_02_12.xlsx"))
 ```
 
 Saves main items in one excel file named `summary_file.xlsx`. Delete `eval=FALSE` to run on local computer.

@@ -1,10 +1,12 @@
-# Calculating the Fiscal Gap {#sec-all-code}
+# Separating Pension Costs - Calculating the Fiscal Gap {#sec-all-code}
+
+This website uses the expenditure categories from previous Annual Reports. Pensions are removed from individual agencies and displayed as its own expenditure category. 
 
 ```{r setup, warning=FALSE, message=FALSE}
 
 library(tidyverse)
 #library(haven)
-#library(formatR)
+library(formatR)
 #library(lubridate)
 # library(smooth)
 # library(forecast)
@@ -21,6 +23,8 @@ theme_set(theme_classic() )
 
 current_year <- 2024
 past_year <- current_year - 1
+
+move_to_last <- function(df, n) df[c(setdiff(seq_len(nrow(df)), n), n), ]
 
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
@@ -254,7 +258,7 @@ State pension contributions are largely captured with object=4431. **(State paym
 -   Judges Retirement System (JRS)
 -   General Assembly Retirement System (GARS)
 
-Modify exp_temp and move all state pension contributions to their own group (901). For more information on the variables included or excluded, please see @sec-pensions.
+Modify exp_temp and move all state pension contributions to their own group (901). 
 
 ```{r fig-pensions, fig.cap="Pensions"}
 
@@ -380,7 +384,6 @@ Agency 416 had group insurance contributions for 1998-2005 and 2013-present. Age
 
 FY2021 and FY2022 contributions coded with object = 1900 (lump sum) for some reason??
 
-> Why is
 
 ```{r eehc1}
 #if observation is a group insurance contribution, then the expenditure amount is set to $0 (essentially dropped from analysis)
@@ -721,8 +724,6 @@ rev_temp <- rev_temp %>%
 ```
 
 ### Federal to State Transfers
-
-For an deeper look at federal revenue to Illinois, [Chapter -@sec-covid-federal-funds].
 
 ```{r fig-create-rev-federal-transfers}
 #rev_temp <- rev_temp %>% filter(in_ff==1)
@@ -1709,11 +1710,20 @@ exp_long <- pivot_longer(exp_totals, exp_402:exp_TOTALS , names_to = c("type", "
              Category == "422" ~ "NATURAL RESOURCES" ,
              Category == "426" ~ "CORRECTIONS",
              Category == "427" ~ "EMPLOYMENT SECURITY" ,
+             Category == "442" ~ "Human Rights" ,
+
              Category == "444" ~ "Human Services" ,
+                          Category == "445" ~ "IL Power Agency" ,
+                          Category == "452" ~ "Labor" ,
+             Category == "458" ~ "State Lottery" ,
+
+
              Category == "478" ~ "HEALTHCARE & FAM SER NET OF MEDICAID", 
              Category == "482" ~ "PUBLIC HEALTH", 
              Category == "492" ~ "REVENUE", 
              Category == "494" ~ "Transportation" ,
+                          Category == "497" ~ "Veterans' Affairs" ,
+
              Category == "532" ~ "ENVIRONMENTAL PROTECT AGENCY" ,
              Category == "557" ~ "Tollway" ,
              Category == "684" ~ "IL COMMUNITY COLLEGE BOARD", 
@@ -1811,17 +1821,18 @@ CAGR_expenditures_summary_tot <- data.frame(cagr_1, cagr_2, cagr_3, cagr_5, cagr
   select(-c(Category_name.1, Category_name.2, Category_name.3, Category_name.4, Category_name.5 )) %>% 
   rename("Expenditure Category" = Category_name, "1 Year CAGR" = cagr_1, "2 Year CAGR" = cagr_2, "3 Year CAGR" = cagr_3, "5 Year CAGR" = cagr_5, "10 Year CAGR" = cagr_10, "26 Year CAGR" = cagr_max )
 
-move_to_last <- function(df, n) df[c(setdiff(seq_len(nrow(df)), n), n), ]
 
-CAGR_expenditures_summary_tot <- move_to_last(CAGR_expenditures_summary_tot, 29
-                                          ) 
+totalrow <- which(grepl("Total", CAGR_expenditures_summary_tot$`Expenditure Category`))
 
-#CAGR_expenditures_summary_tot <-   select(CAGR_expenditures_summary_tot, -1) 
+CAGR_expenditures_summary_tot <- move_to_last(CAGR_expenditures_summary_tot, totalrow) 
+
+lastrow = nrow(CAGR_expenditures_summary_tot)
+
 
 CAGR_expenditures_summary_tot %>%   
   kbl(caption = "CAGR Calculations for All Expenditure Categories" , row.names=FALSE) %>% 
   kable_classic() %>%
-  row_spec(31, bold = T, color = "black", background = "gray")
+  row_spec(lastrow, bold = T, color = "black", background = "gray")
 ```
 
 ```{r }
@@ -1868,13 +1879,18 @@ CAGR_revenue_summary_tot <- data.frame(cagr_1, cagr_2, cagr_3, cagr_5, cagr_10, 
   select(-c(Category_name.1, Category_name.2, Category_name.3, Category_name.4, Category_name.5 )) %>% 
   rename("Revenue Category" = Category_name, "1 Year CAGR" = cagr_1, "2 Year CAGR" = cagr_2, "3 Year CAGR" = cagr_3, "5 Year CAGR" = cagr_5, "10 Year CAGR" = cagr_10, "26 Year CAGR" = cagr_max )
 
-CAGR_revenue_summary_tot <- move_to_last(CAGR_revenue_summary_tot,1)
-CAGR_revenue_summary_tot <- move_to_last(CAGR_revenue_summary_tot,22)
+CAGR_revenue_summary_tot <- move_to_last(CAGR_revenue_summary_tot, 1)
+
+totalrow <- which(grepl("Total", CAGR_revenue_summary_tot$`Revenue Category`))
+
+CAGR_revenue_summary_tot <- move_to_last(CAGR_revenue_summary_tot, totalrow)
+
+lastrow = nrow(CAGR_revenue_summary_tot)
 
 CAGR_revenue_summary_tot %>% 
   kbl(caption = "CAGR Calculations for All Revenue Sources (Ordered Alphabetical)", row.names = FALSE) %>% 
    kable_classic() %>%
-    row_spec(23, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 ```
 
 ```{r include = FALSE}
@@ -1883,14 +1899,14 @@ rm(cagr_1, cagr_2, cagr_3, cagr_5, cagr_10, cagr_max)
 
 Update all years in mutate() commands so that they all go up by 1:
 
-```{r }
+```{r}
 
 revenue_change2 <- rev_long %>%
   filter(Year >= past_year) %>%
   pivot_wider(names_from = Year , values_from = Dollars,   names_prefix = "Dollars_") %>%
   mutate(
-    "FY Current FY ($ billions)" = round(Dollars_2024/1000, digits = 1),
-    "FY Past FY ($ billions)" = round(Dollars_2023/1000, digits = 1),
+    "FY Current FY ($ billions)" = round(Dollars_2024/1000, digits = 2),
+    "FY Past FY ($ billions)" = round(Dollars_2023/1000, digits = 2),
          "1-Year Change" = round(((Dollars_2024 -Dollars_2023)/Dollars_2023*100), digits = 2)) %>%
   left_join(CAGR_revenue_summary_tot, by = c("Category_name" = "Revenue Category")) %>% 
     arrange(-`FY Current FY ($ billions)`)%>%
@@ -1901,25 +1917,30 @@ revenue_change2 <- rev_long %>%
   select(-c(Dollars_2023, Dollars_2024, `1 Year CAGR`:`10 Year CAGR`)) 
 
 
-revenue_change2 <- move_to_last(revenue_change2,7)
-revenue_change2 <- move_to_last(revenue_change2,1)
+allother_row <- which(grepl("All Other", revenue_change2$`Revenue Category`))
+
+revenue_change2 <- move_to_last(revenue_change2, allother_row) # Move "All Other" to 2nd to last row
+
+totalrow <- which(grepl("Total", revenue_change2$`Revenue Category`))
+revenue_change2 <- move_to_last(revenue_change2, totalrow) # Move "Total" to last row
+
+lastrow = nrow(revenue_change2)
 
 revenue_change2 %>%   
   filter(!is.na(`Revenue Category`)) %>%
 
   kbl(caption = "Table 1. Yearly Change in Revenue", row.names = FALSE) %>% 
    kable_classic() %>%
-    row_spec(23, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 
 
 
 expenditure_change2 <- exp_long %>%
-  #select(-c(type,Category)) %>%
   filter(Year >= past_year) %>%
   pivot_wider(names_from = Year , values_from = Dollars,   names_prefix = "Dollars_") %>%
   mutate(
-    "FY 2024 ($ billions)" = round(Dollars_2024/1000, digits = 1),
-    "FY 2023 ($ billions)" = round(Dollars_2023/1000, digits = 1),
+    "FY 2024 ($ billions)" = round(Dollars_2024/1000, digits = 2),
+    "FY 2023 ($ billions)" = round(Dollars_2023/1000, digits = 2),
          "1-Year Change" = round((Dollars_2024 -Dollars_2023)/Dollars_2023*100, digits = 2) )%>%
   left_join(CAGR_expenditures_summary_tot, by = c("Category_name" = "Expenditure Category")) %>% 
   arrange(-`FY 2024 ($ billions)`)%>%
@@ -1928,15 +1949,20 @@ expenditure_change2 <- exp_long %>%
   rename( "26-Year CAGR" = `26 Year CAGR`, 
           "Expenditure Category" = Category_name )
 
-expenditure_change2 <- move_to_last(expenditure_change2, 1)
+allother_row <- which(grepl("All Other", expenditure_change2$`Expenditure Category`))
+
+expenditure_change2 <- move_to_last(expenditure_change2, allother_row) # Move "All Other" to 2nd to last row
+
+totalrow <- which(grepl("Total", expenditure_change2$`Expenditure Category`))
+expenditure_change2 <- move_to_last(expenditure_change2, totalrow) # Move "Total" to last row
+
+lastrow = nrow(expenditure_change2)
 
 expenditure_change2 %>% 
-
  filter(!is.na(`Expenditure Category`)) %>%
-
   kbl(caption = "Table 2. Yearly Change in Expenditures - All FF Categories, Ordered from Largest to Smallest Expenditure Amount", row.names = FALSE) %>% 
   kable_classic() %>%
-    row_spec(31, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 
            
 ```
@@ -1951,7 +1977,6 @@ The 10 largest revenue sources and 15 largest expenditure sources remain separat
 ```{r }
 #| label: tbl-top-exp-CAGRs
 #| tbl-cap: Largest Expenditure Categories with CAGRs
-
 
 exp_totals <- ff_exp %>% rowwise() %>% mutate(exp_TOTALS = sum(across(exp_402:exp_970))) # creates total column too
 
@@ -2008,7 +2033,8 @@ rev_long_majorcats <- pivot_longer(rev_totals, rev_02:rev_TOTALS, names_to = c("
 
 
 # creates wide version of table where each revenue source is a column
-revenue_wide_majorcats <- rev_long_majorcats %>% pivot_wider(names_from = Category_name, 
+revenue_wide_majorcats <- rev_long_majorcats %>% 
+  pivot_wider(names_from = Category_name, 
               values_from = Dollars) %>%
   relocate("All Other Sources **", .after = last_col()) %>%
   relocate("Total Revenue", .after =  last_col()) 
@@ -2117,16 +2143,19 @@ CAGR_expenditures_majorcats_tot <- data.frame(cagr_1, cagr_2, cagr_3, cagr_5, ca
   select(-c(Category_name.1, Category_name.2, Category_name.3, Category_name.4, Category_name.5 )) %>% 
   rename("Expenditure Category" = Category_name, "1 Year CAGR" = cagr_1, "2 Year CAGR" = cagr_2, "3 Year CAGR" = cagr_3, "5 Year CAGR" = cagr_5, "10 Year CAGR" = cagr_10,"26-Year CAGR" = cagr_max )
 
-move_to_last <- function(df, n) df[c(setdiff(seq_len(nrow(df)), n), n), ]
+allother_row <- which(grepl("All Other", CAGR_expenditures_majorcats_tot$`Expenditure Category`))
 
-CAGR_expenditures_majorcats_tot <- move_to_last(CAGR_expenditures_majorcats_tot, 1)
-CAGR_expenditures_majorcats_tot <- move_to_last(CAGR_expenditures_majorcats_tot, 14) 
+CAGR_expenditures_majorcats_tot <- move_to_last(CAGR_expenditures_majorcats_tot, allother_row) # Move "All Other" to 2nd to last row
 
+totalrow <- which(grepl("Total", CAGR_expenditures_majorcats_tot$`Expenditure Category`))
+CAGR_expenditures_majorcats_tot <- move_to_last(CAGR_expenditures_majorcats_tot, totalrow) # Move "Total" to last row
+
+lastrow = nrow(CAGR_expenditures_majorcats_tot)
 
 CAGR_expenditures_majorcats_tot%>%   
   kbl(caption = "CAGR Calculations for Largest Expenditure Categories" , row.names=FALSE) %>% 
      kable_classic()  %>%
-    row_spec(17, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 
 
 
@@ -2134,9 +2163,9 @@ CAGR_expenditures_majorcats_tot%>%
 expenditure_change_majorcats <- exp_long_majorcats %>%
   filter(Year >= past_year) %>%
   pivot_wider(names_from = Year , values_from = Dollars,   names_prefix = "Dollars_") %>%
-  mutate("FY 2024 ($ Billions)" = round(Dollars_2024/1000, digits = 1),
-         "FY 2023 ($ Billions)" = round(Dollars_2023/1000, digits = 1),
-         "1-Year Change" = percent((Dollars_2024 -Dollars_2023)/Dollars_2023, accuracy = .1) )  %>%
+  mutate("FY 2024 ($ Billions)" = round(Dollars_2024/1000, digits = 2),
+         "FY 2023 ($ Billions)" = round(Dollars_2023/1000, digits = 2),
+         "1-Year Change" = percent((Dollars_2024 -Dollars_2023)/Dollars_2023, accuracy = .01) )  %>%
   left_join(CAGR_expenditures_majorcats_tot, by = c("Category_name" = "Expenditure Category")) %>% 
   arrange(-`FY 2024 ($ Billions)`)%>%
   mutate(`26-Year CAGR` = percent(`26-Year CAGR`/100, accuracy=.1)) %>%
@@ -2144,14 +2173,19 @@ expenditure_change_majorcats <- exp_long_majorcats %>%
   rename( "26-Year CAGR" = `26-Year CAGR`, 
           "Expenditure Category" = Category_name )
 
-expenditure_change_majorcats <- move_to_last(expenditure_change_majorcats, 4) 
+allother_row <- which(grepl("All Other", expenditure_change_majorcats$`Expenditure Category`))
 
-expenditure_change_majorcats <- move_to_last(expenditure_change_majorcats, 1)
+expenditure_change_majorcats <- move_to_last(expenditure_change_majorcats, allother_row) # Move "All Other" to 2nd to last row
+
+totalrow <- which(grepl("Total", expenditure_change_majorcats$`Expenditure Category`))
+expenditure_change_majorcats <- move_to_last(expenditure_change_majorcats, totalrow) # Move "Total" to last row
+
+lastrow = nrow(expenditure_change_majorcats)
 
 expenditure_change_majorcats %>% 
   kbl(caption = "Yearly Change in Expenditures", row.names = FALSE, align = "l") %>% 
   kable_classic() %>%
-    row_spec(17, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 
 ```
 
@@ -2161,7 +2195,6 @@ Top 10 revenue sources CAGRs and Yearly Change Tables:
 #| label: tbl-top10-rev-CAGRs
 #| tbl-cap: Top 10 Revenue Sources with CAGRs
 #| tbl-cap-location: top
-
 
 ##### Top 10 revenue CAGRs: ####
 
@@ -2204,13 +2237,19 @@ CAGR_revenue_majorcats_tot <- data.frame(cagr_1, cagr_2, cagr_3, cagr_5, cagr_10
   select(-c(Category_name.1, Category_name.2, Category_name.3, Category_name.4, Category_name.5 )) %>% 
   rename("Revenue Category" = Category_name, "1 Year CAGR" = cagr_1, "2 Year CAGR" = cagr_2, "3 Year CAGR" = cagr_3, "5 Year CAGR" = cagr_5, "10 Year CAGR" = cagr_10, "26-Year CAGR" = cagr_max )
 
-CAGR_revenue_majorcats_tot <- move_to_last(CAGR_revenue_majorcats_tot,1)
-CAGR_revenue_majorcats_tot <- move_to_last(CAGR_revenue_majorcats_tot,11)
+allother_row <- which(grepl("All Other", CAGR_revenue_majorcats_tot$`Revenue Category`))
+
+CAGR_revenue_majorcats_tot <- move_to_last(CAGR_revenue_majorcats_tot, allother_row) # Move "All Other" to 2nd to last row
+
+totalrow <- which(grepl("Total", CAGR_revenue_majorcats_tot$`Revenue Category`))
+CAGR_revenue_majorcats_tot <- move_to_last(CAGR_revenue_majorcats_tot, totalrow) # Move "Total" to last row
+
+lastrow = nrow(CAGR_revenue_majorcats_tot)
 
 CAGR_revenue_majorcats_tot %>% 
   kbl(caption = "CAGR Calculations for Largest Revenue Sources", row.names = FALSE) %>% 
   kable_classic() %>%
-    row_spec(12, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 ```
 
 ```{r }
@@ -2236,14 +2275,19 @@ revenue_change_majorcats <- rev_long_majorcats %>%
   rename("Revenue Category" = Category_name ) %>%
   select(-c(Dollars_2024, Dollars_2023, `1 Year CAGR`:`26-Year CAGR`)) 
 
-revenue_change_majorcats <- move_to_last(revenue_change_majorcats,5)
+allother_row <- which(grepl("All Other", revenue_change_majorcats$`Revenue Category`))
 
-revenue_change_majorcats <- move_to_last(revenue_change_majorcats,1)
+revenue_change_majorcats <- move_to_last(revenue_change_majorcats, allother_row) # Move "All Other" to 2nd to last row
+
+totalrow <- which(grepl("Total", revenue_change_majorcats$`Revenue Category`))
+revenue_change_majorcats <- move_to_last(revenue_change_majorcats, totalrow) # Move "Total" to last row
+
+lastrow = nrow(revenue_change_majorcats)
 
 revenue_change_majorcats%>% 
   kbl(caption = "Yearly Change in Revenue for Main Revenue Sources", row.names = FALSE, align = "l") %>% 
    kable_classic() %>%
-    row_spec(12, bold = T, color = "black", background = "gray")
+    row_spec(lastrow, bold = T, color = "black", background = "gray")
 
 ```
 
@@ -2278,7 +2322,7 @@ dataset_names <- list('Aggregate Revenues' = revenue_wide2,
                       'aggregated_totals_long' = aggregated_totals_long # all data in long format. Good for creating pivot tables in Excel
                       )
 
-# write.xlsx(dataset_names, file = paste0("data/FY", current_year, " Files/summary_file_FY24_wTotals_2025_02_06.xlsx"))
+write.xlsx(dataset_names, file = paste0("data/FY", current_year, " Files/summary_file_FY24_wTotals_2025_02_12.xlsx"))
 ```
 
 Saves main items in one excel file named `summary_file.xlsx`. Delete `eval=FALSE` to run on local computer.
