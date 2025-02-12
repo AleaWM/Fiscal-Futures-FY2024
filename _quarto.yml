@@ -10,8 +10,8 @@ book:
 
   chapters:
     - index.qmd
-    - Everything.qmd 
     - Everything_changepensions.qmd
+    - Everything.qmd 
 
 
   navbar: 
